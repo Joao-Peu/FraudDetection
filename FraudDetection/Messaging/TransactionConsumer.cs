@@ -1,15 +1,19 @@
-﻿using RabbitMQ.Client;
+﻿using FraudDetection.Models;
+using FraudDetection.Services;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Text.Json;
 
 namespace FraudDetection.Messaging
 {
-    public class TransactionConsumer
+    public class TransactionConsumer : IDisposable
     {
         private readonly IConnection _connection;
         private readonly IModel _channel;
+        private readonly FraudDetectionService _fraudDetectionService;
 
-        public TransactionConsumer(IConfiguration configuration)
+        public TransactionConsumer(IConfiguration configuration, FraudDetectionService fraudDetectionService)
         {
             var factory = new ConnectionFactory
             {
@@ -24,6 +28,8 @@ namespace FraudDetection.Messaging
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
+
+            _fraudDetectionService = fraudDetectionService;
         }
 
         public void StartConsuming()
@@ -35,13 +41,33 @@ namespace FraudDetection.Messaging
                 var message = Encoding.UTF8.GetString(body);
                 Console.WriteLine($"Received message: {message}");
 
-                //Adicionar logica para validar fraudes
+                var transactionDTO = MapMessageToTransaction(message);
+
+                // Verifique se a transação é fraudulenta usando os serviços de detecção
+                var fraudResult = _fraudDetectionService.IsFraudulentTransaction(transactionDTO);
+
+                if (fraudResult.Contains("risco de fraude") ||
+                    _fraudDetectionService.CheckTransactionFrequency(transactionDTO) ||
+                    _fraudDetectionService.CheckTransactionAmount(transactionDTO) ||
+                    _fraudDetectionService.CheckTransactionLocation(transactionDTO))
+                {
+                    Console.WriteLine("Fraudulent transaction detected!");
+                }
+                else
+                {
+                    Console.WriteLine("Transaction is not fraudulent");
+                }
             };
 
             _channel.BasicConsume(
                 queue: "fraud-transactions",
                 autoAck: true,
                 consumer: consumer);
+        }
+
+        private TransactionDTO MapMessageToTransaction(string message)
+        {
+            return JsonSerializer.Deserialize<TransactionDTO>(message);
         }
 
         public void Dispose()
