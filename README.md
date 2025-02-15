@@ -22,3 +22,6 @@ Este projeto tem como objetivo a detecção de fraudes em transações financeir
    git clone https://github.com/Joao-Peu/FraudDetection.git
 2. Abra o projeto no Visual Studio.
 3. Execute o projeto para iniciar o serviço de detecção de fraudes.
+
+
+Essa descrição oferece uma visão geral do projeto, das tecnologias usadas e como rodá-lo. Claro, você pode ajustar conforme as funcionalidades específicas do seu projeto!
