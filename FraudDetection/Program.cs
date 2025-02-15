@@ -1,4 +1,5 @@
 using FraudDetection.Messaging;
+using FraudDetection.Services;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<RabbitMQService>();
+builder.Services.AddSingleton<TransactionConsumer>();
+builder.Services.AddSingleton<FraudDetectionService>();
 
 var app = builder.Build();
 
